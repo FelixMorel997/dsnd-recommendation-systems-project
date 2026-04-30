@@ -1,55 +1,77 @@
-# README Template
+# IBM Article Recommendation System
 
-Below is a template provided for use when building your README file for students.
+## Overview
+This project builds and evaluates multiple recommendation approaches using the **IBM user–article interactions** dataset. The goal is to recommend relevant articles to users based on **popularity**, **user behavior**, and **content similarity**, while handling common recommender challenges like **sparsity** and **cold-start**.
 
-# Project Title
+---
 
-Project description goes here.
+## Dataset
+The dataset contains user–article interaction logs with (at least) the following fields:
+- `user_id` (mapped from email)
+- `article_id`
+- `title`
 
-## Getting Started
+**Important:** Each row is treated as a **single user–article interaction**. If a user interacts with the same article multiple times, each interaction is counted.
 
-Instructions for how to get a copy of the project running on your local machine.
+---
 
-### Dependencies
+## Methods Implemented
 
-```
-Examples here
-```
+### 1) Rank-Based Recommendations (Section 2)
+**What it does:** Recommends the most popular articles overall (highest interaction count).  
+**Strengths:** Simple, robust, and works well for **new users** with no history.  
+**Limitations:** Not personalized and can over-recommend the same popular content (popularity bias).
 
-### Installation
+---
 
-Step by step explanation of how to get a dev environment running.
+### 2) User–User Collaborative Filtering (Section 3)
+**What it does:** Finds similar users based on interaction overlap (e.g., cosine similarity) and recommends articles read by similar users that the target user hasn’t seen.  
+**Strengths:** Personalized recommendations for **users with enough history**.  
+**Limitations:** Struggles with **cold-start users**, can be sensitive to sparse data, and may be computationally heavier at scale.
 
-List out the steps
+---
 
-```
-Give an example here
-```
+### 3) Content-Based Recommendations (Section 4)
+**What it does:** Builds article similarity from text features (titles). Typical pipeline:
+- TF-IDF on titles  
+- Dimensionality reduction (SVD/LSA)  
+- Clustering (e.g., KMeans)  
+Then recommends articles from the same cluster, often ranked by popularity.
 
-## Testing
+**Strengths:** Works well for **new or lightly active users** and supports “more like this” recommendations.  
+**Limitations:** Quality depends on text richness (titles alone can be limited) and can reduce novelty by recommending near-duplicates.
 
-Explain the steps needed to run any automated tests
+---
 
-### Break Down Tests
+## Evaluation & Model Selection
+TruncatedSVD was tested with varying latent dimensions and evaluated with **accuracy**, **precision**, and **recall** on reconstructing the user–item matrix.
 
-Explain what each test does and why
+A practical choice was around **200 latent features**, since:
+- recall is already high (e.g., > 0.8),
+- accuracy and precision are near 1,
+- increasing dimensions further gives diminishing returns while making the model slower and more complex.
 
-```
-Examples here
-```
+---
 
-## Project Instructions
+## Cold-Start Strategy (Practical Deployment)
+A hybrid approach is recommended depending on user history:
+- **No history:** Rank-based (popularity)
+- **Little history:** Content-based (similar titles/topics) + popularity fallback
+- **Lots of history:** Collaborative filtering (personalization) + content-based for diversity
 
-This section should contain all the student deliverables for this project.
+---
 
-## Built With
+## Improvements & Next Steps
+Potential improvements to increase recommendation quality:
+- Use richer text data: article summaries, full text, tags, keywords, author, categories.
+- Use modern embeddings (sentence/document embeddings) instead of TF-IDF only.
+- Build a hybrid ranker combining popularity + CF + content signals.
+- Use online evaluation (A/B testing) with metrics such as CTR, completion rate, and retention.
 
-* [Item1](www.item1.com) - Description of item
-* [Item2](www.item2.com) - Description of item
-* [Item3](www.item3.com) - Description of item
+---
 
-Include all items used to build project.
-
-## License
-
-[License](LICENSE.txt)
+## Tech Stack
+- Python
+- Pandas, NumPy
+- scikit-learn (TF-IDF, TruncatedSVD, KMeans, cosine similarity)
+- Jupyter Notebook
